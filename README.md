@@ -1,114 +1,64 @@
-# COMP331 Final Project  
-## Data Quality Review of the UCI Student Performance Dataset
+BSK15 - COMP331 Final Project
+Data Quality Review of the UCI Student Performance Dataset
 
-This repository contains my final project for COMP 331 – Data Warehousing and Data Mining. 
-The project examines data quality issues in the Student Performance datasets from the UCI 
-Machine Learning Repository. These datasets capture demographic details, academic background, 
-study behaviour, support programs, and performance information for students enrolled in 
-Mathematics and Portuguese language courses.
+This repository contains all files and outputs for the COMP 331 final project. It includes the analysis script, processed results (plots and tables), original datasets, and the final report.
 
-The project is based on *Option 2: Data Mining Quality and Bias Assessment* from the final 
-project guidelines.
+--- Repository Structure
+1. /code/ — Analysis Scripts
 
----
+Contains the main R script used for the full analysis:
 
-## 📁 Dataset Overview
+data_quality_analysis.R
+Loads both datasets, checks completeness, consistency, uniqueness, and representativeness, and generates all plots/tables stored in /results.
 
-The UCI repository provides two CSV files:
+2. /results/ — Generated Outputs
 
-- **student-mat.csv** – student information for the Mathematics course  
-- **student-por.csv** – student information for the Portuguese course  
+All outputs created by the R script:
 
-Each dataset includes:
-- Demographic characteristics  
-- Family structure  
-- Academic support variables  
-- Alcohol consumption and health metrics  
-- Attendance and study habits  
-- Grades (G1, G2, G3)
+Plots
 
-Original dataset source:  
-https://archive.ics.uci.edu/dataset/320/student+performance
+g3_box.png — Boxplot comparing final grades (G3)
 
----
+g3_hist.png — Histogram of G3 distributions
 
-## 🎯 Project Goals
+absences_vs_g3.png — Scatterplot of absences vs final grade
 
-The project focuses on:
-- Evaluating data quality dimensions from Weeks 10–11  
-- Identifying issues involving completeness, consistency/uniqueness, and representativeness  
-- Connecting findings to data mining concepts such as training data quality and sampling bias  
-- Developing recommendations to improve reliability and fairness  
-- Maintaining a clean GitHub repository with data, scripts, and results
+Tables (CSV)
 
----
+missing_summary.csv — Missing data summary
 
-## 📂 Repository Structure
+overlap_counts.csv — Math/Portuguese row counts & overlap
 
-```
-COMP331-Final-Project/
-│
-├── data/
-│   ├── student-mat.csv
-│   ├── student-por.csv
-│
-├── code/
-│   ├── student-merge.R
-│   ├── dq_checks.ipynb (optional)
-│
-├── results/
-│   ├── overlap_counts.txt
-│   ├── summary_tables.csv
-│   ├── figures/ (optional)
-│
-├── report/
-│   └── COMP331_Final_Project_Report.pdf
-│
-└── README.md
-```
+row_counts.csv — Dataset-level row counts
 
----
+summary_tables.csv — Combined summary statistics
 
-## 🧪 Scripts Included
+Notes
 
-### **student-merge.R**
-- Loads both CSV datasets  
-- Detects matching students using a multi-attribute key  
-- Merges the datasets or extracts overlap counts  
+representativeness_notes.txt — Interpretation of representativeness findings
 
-### **dq_checks.ipynb** (optional)
-- Runs distribution checks  
-- Highlights inconsistencies  
-- Evaluates sampling imbalance  
-- Prepares visual summaries
+3. Data Files
 
----
+Original UCI datasets used for the analysis:
 
-## 📘 Final Report
-The final PDF is found in the `/report` folder and includes:
+student-mat.csv
 
-1. Introduction  
-2. Data Quality Review  
-3. Recommendations  
-4. Conclusion  
-5. References (separate page)
+student-por.csv
 
----
+4. /report/ — Final Report
 
-## ▶️ How to Run the Analysis
+Contains the final project report submitted for COMP 331.
 
-To run the scripts:
+--- Project Description
 
-1. Clone the repository  
-   ```
-   git clone https://github.com/BSK15/COMP331-Final-Project
-   ```
-2. Open the files in the **code** folder  
-3. Run the R script or Jupyter notebook  
-4. Review generated outputs under **results**
+This project evaluates the UCI Student Performance dataset across key data quality dimensions, including:
 
----
+Completeness
 
-## 📄 Note
-This project is intended solely for COMP 331 coursework.
+Consistency & Uniqueness
 
+Representativeness
+
+The goal is to examine common data issues that may affect data mining or predictive modeling tasks. Outputs supporting this analysis (charts and tables) are provided in the /results folder.
+
+Author - Bhuvraj Khangura
