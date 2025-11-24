@@ -1,0 +1,8 @@
+Row counts:
+  Math:       395
+  Portuguese: 649
+  Overlap:    0
+
+Note: all students come from two Portuguese schools only.
+Interpret models as context-specific rather than fully general.
+
