@@ -1,5 +1,5 @@
-# BSK15 - COMP 331 – Final Project 
-# Data Quality & Bias Analysis - R script
+# BSK15 – COMP 331 – Final Project
+# Data Quality & Bias Analysis – R script
 # This script:
 #   - loads the UCI Student Performance Math & Portuguese datasets
 #   - checks completeness, consistency/uniqueness, representativeness
@@ -19,142 +19,174 @@ if (!dir.exists(results_dir)) {
 }
 
 # ---- Load data ----
-mat <- read.csv(data_path_mat, stringsAsFactors = FALSE)
-por <- read.csv(data_path_por, stringsAsFactors = FALSE)
-
-# ---- 1. Completeness checks ----
-
-# 1a) basic row counts
-count_summary <- data.frame(
-  dataset = c("Math", "Portuguese"),
-  n_rows  = c(nrow(mat), nrow(por))
+mat <- read.csv(
+  data_path_mat,
+  sep = ";",
+  stringsAsFactors = FALSE
 )
 
-write.csv(count_summary,
-          file = file.path(results_dir, "row_counts.csv"),
-          row.names = FALSE)
-
-# 1b) missing values per column
-missing_mat <- sapply(mat, function(x) sum(is.na(x)))
-missing_por <- sapply(por, function(x) sum(is.na(x)))
-
-missing_summary <- data.frame(
-  variable = names(missing_mat),
-  math_missing = as.integer(missing_mat),
-  portug_missing = as.integer(missing_por)
+por <- read.csv(
+  data_path_por,
+  sep = ";",
+  stringsAsFactors = FALSE
 )
 
-write.csv(missing_summary,
-          file = file.path(results_dir, "missing_summary.csv"),
-          row.names = FALSE)
+# Quick check of columns (should match the UCI documentation)
+# print(names(mat))
+# print(names(por))
 
-# ---- 2. Consistency & uniqueness: overlap between files ----
+# ============================================================
+# 1. COMPLETENESS – row counts and overlap
+# ============================================================
 
-# Merge key recommended for the UCI student dataset
-merge_key <- c(
-  "school", "sex", "age", "address", "famsize", "Pstatus",
-  "Medu", "Fedu", "Mjob", "Fjob",
-  "reason", "guardian",
-  "traveltime", "studytime", "failures",
-  "schoolsup", "famsup", "paid", "activities",
-  "nursery", "higher", "internet", "romantic"
-)
+# Shared columns we can safely use to define the same "student"
+shared_cols <- intersect(names(mat), names(por))
 
-# Inner join = students that appear in BOTH subjects
+# Inner join on all shared columns to find students in BOTH subjects
 both <- dplyr::inner_join(
   mat,
   por,
-  by = merge_key,
+  by = shared_cols,
   suffix = c("_mat", "_por")
 )
 
-# Simple counts for report
+cat("Rows in Math file:       ", nrow(mat), "\n")
+cat("Rows in Portuguese file: ", nrow(por), "\n")
+cat("Rows in overlap (both):  ", nrow(both), "\n\n")
+
+# Simple summary table for the report
 overlap_summary <- data.frame(
   description = c("Math total", "Portuguese total", "Overlap (both subjects)"),
   n_students  = c(nrow(mat), nrow(por), nrow(both))
 )
 
-write.csv(overlap_summary,
-          file = file.path(results_dir, "overlap_counts.csv"),
-          row.names = FALSE)
-
-# ---- 3. Grade distributions (G3) ----
-
-grades_long <- bind_rows(
-  mat %>% select(G3) %>% mutate(subject = "Math"),
-  por %>% select(G3) %>% mutate(subject = "Portuguese")
+write.csv(
+  overlap_summary,
+  file      = file.path(results_dir, "overlap_counts.csv"),
+  row.names = FALSE
 )
 
-# 3a) Histogram of final grades by subject
-p_hist <- ggplot(grades_long, aes(x = G3, fill = subject)) +
-  geom_histogram(binwidth = 1, position = "identity", alpha = 0.5) +
-  scale_x_continuous(breaks = 0:20) +
+# ============================================================
+# 2. BASIC SUMMARY TABLES (G3 and absences)
+# ============================================================
+
+summary_tables <- bind_rows(
+  mat %>%
+    summarise(
+      dataset       = "Math",
+      n_students    = n(),
+      mean_G3       = mean(G3, na.rm = TRUE),
+      sd_G3         = sd(G3, na.rm = TRUE),
+      mean_absences = mean(absences, na.rm = TRUE)
+    ),
+  por %>%
+    summarise(
+      dataset       = "Portuguese",
+      n_students    = n(),
+      mean_G3       = mean(G3, na.rm = TRUE),
+      sd_G3         = sd(G3, na.rm = TRUE),
+      mean_absences = mean(absences, na.rm = TRUE)
+    )
+)
+
+write.csv(
+  summary_tables,
+  file      = file.path(results_dir, "summary_tables.csv"),
+  row.names = FALSE
+)
+
+# ============================================================
+# 3. G3 DISTRIBUTIONS (for hist + boxplot)
+# ============================================================
+
+grades_long <- rbind(
+  data.frame(G3 = mat$G3, subject = "Math"),
+  data.frame(G3 = por$G3, subject = "Portuguese")
+)
+
+# Histogram of G3 by subject
+p_g3_hist <- ggplot(grades_long, aes(x = G3, fill = subject)) +
+  geom_histogram(
+    position = "identity",
+    alpha    = 0.5,
+    bins     = 15
+  ) +
   labs(
-    title = "Final Grade (G3) Distribution by Subject",
-    x = "Final grade (G3)",
-    y = "Count",
-    fill = "Subject"
+    title = "Final Grade (G3) Distribution",
+    x     = "G3 (final grade)",
+    y     = "Count"
   ) +
   theme_minimal()
 
 ggsave(
-  filename = file.path(results_dir, "g3_hist_by_subject.png"),
-  plot = p_hist,
-  width = 7, height = 4, dpi = 300
+  filename = file.path(results_dir, "g3_hist.png"),
+  plot     = p_g3_hist,
+  width    = 7,
+  height   = 4,
+  dpi      = 300
 )
 
-# 3b) Boxplot of G3 by subject
-p_box <- ggplot(grades_long, aes(x = subject, y = G3)) +
-  geom_boxplot(outlier.alpha = 0.6) +
+# Boxplot of G3 by subject
+p_g3_box <- ggplot(grades_long, aes(x = subject, y = G3)) +
+  geom_boxplot() +
   labs(
-    title = "Final Grade (G3) Comparison",
-    x = "Subject",
-    y = "Final grade (G3)"
+    title = "G3 Comparison",
+    x     = "Subject",
+    y     = "G3 (final grade)"
   ) +
   theme_minimal()
 
 ggsave(
-  filename = file.path(results_dir, "g3_boxplot_by_subject.png"),
-  plot = p_box,
-  width = 5, height = 4, dpi = 300
+  filename = file.path(results_dir, "g3_box.png"),
+  plot     = p_g3_box,
+  width    = 5,
+  height   = 4,
+  dpi      = 300
 )
 
-# ---- 4. Absences vs Final Grade ----
+# ============================================================
+# 4. ABSENCES vs G3 (scatterplot)
+# ============================================================
 
-absences_long <- bind_rows(
-  mat %>% select(absences, G3) %>% mutate(subject = "Math"),
-  por %>% select(absences, G3) %>% mutate(subject = "Portuguese")
+abs_long <- rbind(
+  data.frame(absences = mat$absences, G3 = mat$G3, subject = "Math"),
+  data.frame(absences = por$absences, G3 = por$G3, subject = "Portuguese")
 )
 
-p_abs <- ggplot(absences_long, aes(x = absences, y = G3, colour = subject)) +
-  geom_point(alpha = 0.4) +
-  geom_smooth(method = "loess", se = FALSE) +
+p_abs <- ggplot(abs_long, aes(x = absences, y = G3, colour = subject)) +
+  geom_jitter(width = 0.4, height = 0.4, alpha = 0.6) +
+  geom_smooth(method = "lm", se = FALSE, size = 0.7) +
   labs(
     title = "Absences vs Final Grade (G3)",
-    x = "Number of absences",
-    y = "Final grade (G3)",
-    colour = "Subject"
+    x     = "Absences",
+    y     = "G3 (final grade)"
   ) +
   theme_minimal()
 
 ggsave(
   filename = file.path(results_dir, "absences_vs_g3.png"),
-  plot = p_abs,
-  width = 7, height = 4, dpi = 300
+  plot     = p_abs,
+  width    = 7,
+  height   = 4,
+  dpi      = 300
 )
 
-# ---- 5. Simple text summary for representativeness ----
-# (not required, but nice to have as a small helper file)
+# ============================================================
+# 5. SIMPLE TEXT NOTES ON REPRESENTATIVENESS
+# ============================================================
 
 repr_text <- paste0(
   "Row counts:\n",
-  "  Math: ", nrow(mat), "\n",
+  "  Math:       ", nrow(mat), "\n",
   "  Portuguese: ", nrow(por), "\n",
-  "  Overlap (both): ", nrow(both), "\n\n",
+  "  Overlap:    ", nrow(both), "\n\n",
   "Note: all students come from two Portuguese schools only.\n",
   "Interpret models as context-specific rather than fully general.\n"
 )
 
-writeLines(repr_text, con = file.path(results_dir, "representativeness_notes.txt"))
+writeLines(
+  repr_text,
+  con = file.path(results_dir, "representativeness_notes.txt")
+)
 
 cat("Data quality checks complete. Results saved in the 'results' folder.\n")
