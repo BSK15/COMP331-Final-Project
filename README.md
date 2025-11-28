@@ -1,4 +1,4 @@
-BSK15 - COMP331 Final Project
+BSK15(Bhuvraj Khangura) - COMP331 Final Project
 Data Quality Review of the UCI Student Performance Dataset
 
 This repository contains all files and outputs for the COMP 331 final project. It includes the analysis script, processed results (plots and tables), original datasets, and the final report.
