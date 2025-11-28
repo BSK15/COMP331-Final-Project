@@ -1,4 +1,4 @@
-# BSK15 – COMP 331 – Final Project
+# BSK15(Bhuvraj Khangura) – COMP 331 – Final Project
 # Data Quality & Bias Analysis – R script
 # This script:
 #   - loads the UCI Student Performance Math & Portuguese datasets
@@ -190,3 +190,4 @@ writeLines(
 )
 
 cat("Data quality checks complete. Results saved in the 'results' folder.\n")
+
